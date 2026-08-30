@@ -151,6 +151,5 @@ export function downloadMidi(arrangement: Arrangement) {
         URL.revokeObjectURL(url);
     } catch (e) {
         console.error("Failed to generate MIDI", e);
-        alert("Could not generate MIDI file. Check console for details.");
     }
 }

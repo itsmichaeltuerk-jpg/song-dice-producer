@@ -21,12 +21,12 @@ class AudioEngine {
     isPlaying = false;
     scheduledNodes: (OscillatorNode | AudioBufferSourceNode)[] = [];
     arrangement: Arrangement | null = null;
-    onBeatCallback: ((beat: number) => void) | null = null;
+    onBeatCallback: ((beat: number, bar: number) => void) | null = null;
     onStopCallback: (() => void) | null = null;
     
     startTime = 0;
     secondsPerStep = 0.125; // 16th note duration
-    totalSteps = 64;
+    totalSteps = 128;
     animationFrameId: number | null = null;
     lastReportedBeat = -1;
 
@@ -325,14 +325,16 @@ class AudioEngine {
         if (currentBeatInt !== this.lastReportedBeat) {
             this.lastReportedBeat = currentBeatInt;
             if (this.onBeatCallback) {
-                this.onBeatCallback((currentBeatInt % 4) + 1);
+                const beatInBar = (currentBeatInt % 4) + 1;
+                const currentBar = Math.floor(currentBeatInt / 4) + 1;
+                this.onBeatCallback(beatInBar, currentBar);
             }
         }
 
         this.animationFrameId = requestAnimationFrame(this.updateVisualizer);
     };
 
-    play(arrangement: Arrangement, onBeat?: (beat: number) => void, onStop?: () => void) {
+    play(arrangement: Arrangement, onBeat?: (beat: number, bar: number) => void, onStop?: () => void) {
         this.init();
         if (!this.ctx) return;
         this.stop();
@@ -345,7 +347,16 @@ class AudioEngine {
         const bpm = arrangement.bpm || 120;
         this.secondsPerStep = (60.0 / bpm) / 4; // 16th note
         this.startTime = this.ctx.currentTime + 0.1;
-        this.totalSteps = 64; // 4 bars * 16 steps
+        
+        // Calculate total steps dynamically from step token lengths or bars_total
+        const kickTokens = (arrangement.step_drums_kick || '').trim().split(/\s+/).filter(t => t.length > 0).length;
+        const bassTokens = (arrangement.step_bass || '').trim().split(/\s+/).filter(t => t.length > 0).length;
+        const chordTokens = (arrangement.step_chords || '').trim().split(/\s+/).filter(t => t.length > 0).length;
+        const melodyTokens = (arrangement.step_melody || '').trim().split(/\s+/).filter(t => t.length > 0).length;
+        
+        const maxTokens = Math.max(kickTokens, bassTokens, chordTokens, melodyTokens);
+        const configuredSteps = (arrangement.bars_total || 8) * 16;
+        this.totalSteps = maxTokens > 0 ? Math.max(maxTokens, configuredSteps) : configuredSteps;
         this.lastReportedBeat = -1;
 
         // Sync delay time to BPM (dotted 8th note)

@@ -24,7 +24,6 @@ export const Die: React.FC<DieProps> = ({ die, onToggleLock, isRolling }) => {
                 ${isAnimating ? 'animate-pulse scale-95 brightness-150' : 'scale-100'}
             `}
             style={{
-                // Subtle inner shadow for a 3D cube/button feel
                 boxShadow: die.isLocked 
                     ? 'inset 0 2px 10px rgba(255,255,255,0.1), 0 0 15px rgba(245,158,11,0.3)' 
                     : 'inset 0 2px 10px rgba(255,255,255,0.05), 0 10px 20px rgba(0,0,0,0.5)'

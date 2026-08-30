@@ -6,7 +6,7 @@ import { audio } from './services/audio';
 import { downloadMidi } from './services/midi';
 import { Die } from './components/Die';
 import { Visualizer } from './components/Visualizer';
-import { Play, Square, Download, Dices, Loader2, Sparkles, Info, Sliders } from 'lucide-react';
+import { Play, Square, Download, Dices, Loader2, Sparkles, Info, Sliders, CheckCircle2, AlertTriangle, ChevronDown, ChevronUp } from 'lucide-react';
 
 const LOADING_PHRASES = [
     "Patching cables...",
@@ -24,7 +24,11 @@ export default function App() {
     const [arrangement, setArrangement] = useState<Arrangement | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentBeat, setCurrentBeat] = useState(0);
+    const [currentBar, setCurrentBar] = useState(1);
     const [error, setError] = useState<string | null>(null);
+    const [geminiError, setGeminiError] = useState<string | null>(null);
+    const [fallbackSuccess, setFallbackSuccess] = useState<boolean>(false);
+    const [isErrorExpanded, setIsErrorExpanded] = useState<boolean>(false);
     
     // FX State
     const [reverb, setReverb] = useState(0.2);
@@ -60,6 +64,8 @@ export default function App() {
         if (isRolling) return;
         
         setError(null);
+        setGeminiError(null);
+        setFallbackSuccess(false);
         setIsRolling(true);
         setLoadingText(LOADING_PHRASES[0]);
         audio.stop();
@@ -74,11 +80,19 @@ export default function App() {
         setDice(newDice);
 
         try {
-            const newArrangement = await generateArrangement(newDice);
-            setArrangement(newArrangement);
-        } catch (err) {
+            const result = await generateArrangement(newDice);
+            setArrangement(result.arrangement);
+            if (result.isFallback) {
+                setGeminiError(result.geminiError);
+                setFallbackSuccess(true);
+            } else {
+                setGeminiError(null);
+                setFallbackSuccess(false);
+            }
+        } catch (err: any) {
             console.error(err);
-            setError("Failed to generate arrangement. Try rolling again.");
+            setError(err?.message || "Failed to generate arrangement. Try rolling again.");
+            setFallbackSuccess(false);
         } finally {
             setIsRolling(false);
         }
@@ -89,11 +103,19 @@ export default function App() {
             audio.stop();
             setIsPlaying(false);
             setCurrentBeat(0);
+            setCurrentBar(1);
         } else if (arrangement) {
             audio.play(
                 arrangement, 
-                (beat) => setCurrentBeat(beat),
-                () => { setIsPlaying(false); setCurrentBeat(0); }
+                (beat, bar) => {
+                    setCurrentBeat(beat);
+                    setCurrentBar(bar);
+                },
+                () => { 
+                    setIsPlaying(false); 
+                    setCurrentBeat(0);
+                    setCurrentBar(1);
+                }
             );
             setIsPlaying(true);
         }
@@ -120,7 +142,7 @@ export default function App() {
 
     return (
         <div className="min-h-screen bg-studio-950 text-studio-200 font-sans selection:bg-studio-amber/30 flex flex-col relative overflow-hidden">
-            {/* Subtle noise texture overlay for that "vinyl/dust" feel */}
+            {/* Subtle noise texture overlay for that vinyl/dust feel */}
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none mix-blend-overlay" style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg viewBox=%220 0 200 200%22 xmlns=%22http://www.w3.org/2000/svg%22%3E%3Cfilter id=%22noiseFilter%22%3E%3CfeTurbulence type=%22fractalNoise%22 baseFrequency=%220.65%22 numOctaves=%223%22 stitchTiles=%22stitch%22/%3E%3C/filter%3E%3Crect width=%22100%25%22 height=%22100%25%22 filter=%22url(%23noiseFilter)%22/%3E%3C/svg%3E")' }}></div>
 
             {/* Header */}
@@ -140,7 +162,7 @@ export default function App() {
                             
                             <div className="absolute top-full left-0 mt-2 w-64 p-3 bg-studio-800 border border-studio-700 rounded-lg shadow-2xl opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity z-50 text-xs text-studio-300 normal-case font-sans">
                                 <strong className="text-white block mb-1">Speed Optimization:</strong>
-                                Powered by Gemini 2.5 Flash. To ensure ultra-fast generation without sacrificing quality, the AI uses a highly token-efficient ASCII step-sequencer format to compose a full 4-bar arrangement instantly.
+                                Powered by Gemini with local procedural matrix fallback. The AI uses an efficient step-sequencer format to compose 4-bar arrangements with immediate playback and MIDI export.
                             </div>
                         </div>
                     </div>
@@ -149,6 +171,7 @@ export default function App() {
                 {/* Transport Controls */}
                 <div className="flex gap-3 w-full sm:w-auto">
                     <button 
+                        id="play-button"
                         onClick={togglePlayback}
                         disabled={!arrangement || isRolling}
                         className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-lg font-bold transition-all shadow-md ${
@@ -162,6 +185,7 @@ export default function App() {
                     </button>
                     
                     <button 
+                        id="export-midi-button"
                         onClick={handleExport}
                         disabled={!arrangement || isRolling}
                         className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-6 py-2 rounded-lg font-bold bg-gradient-to-b from-studio-800 to-studio-900 text-white hover:from-studio-700 hover:to-studio-800 border border-studio-700/50 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md"
@@ -179,6 +203,7 @@ export default function App() {
                     <div className="flex justify-between items-end">
                         <h2 className="text-sm font-mono text-studio-400 uppercase tracking-widest">The Table</h2>
                         <button 
+                            id="roll-dice-button"
                             onClick={handleRoll}
                             disabled={isRolling}
                             className="bg-gradient-to-b from-amber-400 to-studio-amber text-studio-950 px-6 py-3 rounded-xl font-black tracking-wide hover:from-amber-300 hover:to-amber-500 active:scale-95 transition-all disabled:opacity-80 disabled:cursor-not-allowed flex items-center gap-2 shadow-[0_0_20px_rgba(245,158,11,0.2)] border border-amber-300/50 min-w-[200px] justify-center"
@@ -211,6 +236,7 @@ export default function App() {
                                     <span className="text-studio-amber">{Math.round(reverb * 100)}%</span>
                                 </div>
                                 <input 
+                                    id="reverb-slider"
                                     type="range" 
                                     min="0" max="1" step="0.01" 
                                     value={reverb} 
@@ -223,6 +249,7 @@ export default function App() {
                                     <span className="text-studio-amber">{Math.round(delay * 100)}%</span>
                                 </div>
                                 <input 
+                                    id="delay-slider"
                                     type="range" 
                                     min="0" max="1" step="0.01" 
                                     value={delay} 
@@ -232,8 +259,54 @@ export default function App() {
                         </div>
                     </div>
 
-                    {error && (
-                        <div className="p-4 bg-red-900/20 border border-red-900/50 text-red-400 rounded-lg text-sm backdrop-blur-sm">
+                    {/* Gemini Error & Fallback Status Panel (Collapsible to save room) */}
+                    {geminiError && (
+                        <div id="gemini-error-panel" className="bg-red-950/40 border border-red-800/60 rounded-xl backdrop-blur-sm shadow-lg overflow-hidden transition-all">
+                            {/* Header Toggle */}
+                            <button
+                                id="toggle-gemini-error-button"
+                                onClick={() => setIsErrorExpanded(!isErrorExpanded)}
+                                className="w-full p-3.5 flex items-center justify-between gap-3 text-left hover:bg-red-900/20 transition-colors"
+                            >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    <AlertTriangle className="text-red-400 shrink-0" size={16} />
+                                    <span className="text-xs font-bold font-mono text-red-300 truncate">
+                                        Gemini API Notice {fallbackSuccess ? '(Procedural Fallback Active)' : ''}
+                                    </span>
+                                </div>
+                                <div className="flex items-center gap-2 shrink-0">
+                                    {fallbackSuccess && (
+                                        <span className="text-[10px] bg-emerald-950/80 text-emerald-400 border border-emerald-800/60 font-mono px-2 py-0.5 rounded-full flex items-center gap-1">
+                                            <CheckCircle2 size={11} /> Active
+                                        </span>
+                                    )}
+                                    {isErrorExpanded ? <ChevronUp size={16} className="text-red-400" /> : <ChevronDown size={16} className="text-red-400" />}
+                                </div>
+                            </button>
+
+                            {/* Collapsible Content */}
+                            {isErrorExpanded && (
+                                <div className="p-4 pt-1 border-t border-red-900/50 space-y-2.5">
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-[10px] uppercase tracking-wider text-red-400 font-bold font-mono">Raw API Diagnostic:</span>
+                                        <p className="text-xs text-red-200/90 font-mono break-words leading-relaxed bg-red-950/70 p-2.5 rounded-lg border border-red-900/60 max-h-40 overflow-y-auto">
+                                            {geminiError}
+                                        </p>
+                                    </div>
+
+                                    {fallbackSuccess && (
+                                        <div id="fallback-success-indicator" className="pt-2 border-t border-red-900/40 flex items-center gap-2 text-emerald-400 font-bold text-xs tracking-wide">
+                                            <CheckCircle2 size={14} className="text-emerald-400 shrink-0" />
+                                            <span>Procedural Music Theory Fallback Successful</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {error && !fallbackSuccess && (
+                        <div id="fatal-error-panel" className="p-4 bg-red-900/30 border border-red-800/60 text-red-300 rounded-xl text-sm font-mono backdrop-blur-sm">
                             {error}
                         </div>
                     )}
@@ -246,6 +319,7 @@ export default function App() {
                         arrangement={arrangement} 
                         isPlaying={isPlaying} 
                         currentBeat={currentBeat} 
+                        currentBar={currentBar}
                     />
                 </div>
 

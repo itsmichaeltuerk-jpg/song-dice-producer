@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Song Dice</title>
+    <meta name="description" content="A creative spark tool for bedroom musicians. Roll musical dice to generate a starting arrangement, preview it, and export MIDI.">
+    <meta property="og:title" content="Song Dice">
+    <meta property="og:description" content="A creative spark tool for bedroom musicians. Roll musical dice to generate a starting arrangement, preview it, and export MIDI.">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -15,6 +18,11 @@
                             900: '#171717',
                             800: '#262626',
                             700: '#404040',
+                            600: '#525252',
+                            500: '#737373',
+                            400: '#a3a3a3',
+                            300: '#d4d4d4',
+                            200: '#e5e5e5',
                             amber: '#f59e0b',
                             amberDim: 'rgba(245, 158, 11, 0.2)'
                         }
@@ -88,9 +96,9 @@
             box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
         }
     </style>
-    </head>
+</head>
 <body>
     <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
-<script type="module" src="/index.js"></script></body>
+    <script type="module" src="/src/main.tsx"></script>
+</body>
 </html>

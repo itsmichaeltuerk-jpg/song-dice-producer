@@ -17,7 +17,6 @@ export interface Arrangement {
     chord_progression_text: string;
     
     // STEP SEQUENCER FORMAT (64 steps = 4 bars of 16th notes)
-    // This is 10x-20x more token-efficient than JSON objects, allowing fast 4-bar generation.
     // Format: Space-separated. 
     // 'X' = Drum hit, 'C4' = Note, 'Am' = Chord, '.' = Sustain/Hold, '-' = Rest
     step_chords: string;
