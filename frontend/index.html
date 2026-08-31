@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Song Dice | Bedroom Producer Spark Tool</title>
+    <script>
+        // Ensure process.env is safely accessible in the browser without ReferenceError
+        window.process = window.process || { env: {} };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700&family=JetBrains+Mono:wght@400;500;600;700&family=Cabinet+Grotesk:wght@800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        studio: {
+                            950: '#08080a',
+                            900: '#111115',
+                            850: '#16161c',
+                            800: '#1e1e26',
+                            750: '#262632',
+                            700: '#323242',
+                            600: '#4a4a5e',
+                            500: '#717188',
+                            400: '#9b9bb2',
+                            300: '#c5c5d6',
+                            200: '#e4e4ed',
+                            100: '#f4f4f8',
+                            amber: '#f59e0b',
+                            amberGlow: '#fbbf24',
+                            amberDark: '#b45309',
+                            ledRed: '#ef4444',
+                            ledGreen: '#10b981',
+                            ledCyan: '#06b6d4',
+                            ledPurple: '#a855f7'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        display: ['"Cabinet Grotesk"', '"Plus Jakarta Sans"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace'],
+                    },
+                    boxShadow: {
+                        'amber-glow': '0 0 25px -3px rgba(245, 158, 11, 0.45)',
+                        'amber-subtle': '0 0 12px 0 rgba(245, 158, 11, 0.25)',
+                        'studio-die': '0 8px 24px -4px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.1)',
+                        'studio-inset': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.6)'
+                    },
+                    animation: {
+                        'die-spin': 'dieRoll 0.4s cubic-bezier(0.2, 0.8, 0.2, 1)',
+                        'on-air-pulse': 'onAirPulse 1.5s ease-in-out infinite',
+                    },
+                    keyframes: {
+                        dieRoll: {
+                            '0%': { transform: 'scale(0.92) rotate(-8deg)', opacity: '0.7' },
+                            '50%': { transform: 'scale(1.05) rotate(4deg) translateY(-4px)', opacity: '0.9' },
+                            '100%': { transform: 'scale(1) rotate(0deg)', opacity: '1' }
+                        },
+                        onAirPulse: {
+                            '0%, 100%': { opacity: '1', boxShadow: '0 0 10px rgba(239, 68, 68, 0.6)' },
+                            '50%': { opacity: '0.7', boxShadow: '0 0 3px rgba(239, 68, 68, 0.2)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #08080a;
+            color: #e4e4ed;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.08) 0%, transparent 60%),
+                radial-gradient(circle at 10% 30%, rgba(168, 85, 247, 0.04) 0%, transparent 40%),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #111115; }
+        ::-webkit-scrollbar-thumb { background: #262632; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f59e0b; }
+
+        .die-metal {
+            background: linear-gradient(145deg, #1f1f2a, #14141a);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .die-metal-locked {
+            background: linear-gradient(145deg, #242220, #171512);
+            border: 1px solid rgba(245, 158, 11, 0.6);
+        }
+    </style>
+    </head>
+<body class="selection:bg-studio-amber selection:text-studio-950">
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+<script type="module" src="/index.js"></script></body>
+</html>
